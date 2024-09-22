@@ -1,28 +1,39 @@
 import { useState } from 'react';
 
 export default function Home() {
-  const [jsonData, setJsonData] = useState('');
-  const [response, setResponse] = useState(null);
-  const [filter, setFilter] = useState([]);
+  const [jsonData, setJsonData] = useState('');   // To store JSON input from the user
+  const [response, setResponse] = useState(null); // To store the backend response
+  const [filter, setFilter] = useState([]);       // To store the selected filter (Alphabets, Numbers, Highest Alphabet)
+  const [error, setError] = useState('');         // To handle and display validation errors
 
+  const backendUrl = 'https://bfhl-backend-mj07.onrender.com/bfhl'; // Replace with your deployed backend URL
+
+  // Function to handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setError(''); // Clear previous errors
+
+    // Validate if the JSON input is valid
     try {
-      const parsedData = JSON.parse(jsonData);
-      const res = await fetch('https://your-heroku-app.herokuapp.com/bfhl', { // Replace with your backend URL
+      const parsedData = JSON.parse(jsonData); // Parse the input JSON
+      if (!parsedData.data) throw new Error("Invalid JSON format. Please include a 'data' key.");
+      
+      // Make POST request to the backend
+      const res = await fetch(backendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: parsedData.data })
+        body: JSON.stringify({ data: parsedData.data }),
       });
-      const result = await res.json();
-      setResponse(result);
+
+      const result = await res.json(); // Get the response from the backend
+      setResponse(result);             // Store the response
     } catch (err) {
-      alert('Invalid JSON input');
+      setError('Invalid JSON input. Please check your format.');
     }
   };
 
-  const handleFilter = (e) => {
+  // Function to handle the filter selection
+  const handleFilterChange = (e) => {
     const value = e.target.value;
     if (filter.includes(value)) {
       setFilter(filter.filter(f => f !== value));
@@ -41,26 +52,44 @@ export default function Home() {
           value={jsonData}
           onChange={(e) => setJsonData(e.target.value)}
           rows={4}
+          placeholder={`Example: { "data": ["A", "C", "z", "1", "3"] }`}
         />
         <button type="submit">Submit</button>
       </form>
 
+      {/* Display error message if any */}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {/* If we have a response from the backend */}
       {response && (
         <div>
           <h3>Filter Options</h3>
           <label>
-            <input type="checkbox" value="alphabets" onChange={handleFilter} />
+            <input
+              type="checkbox"
+              value="alphabets"
+              onChange={handleFilterChange}
+            />
             Alphabets
           </label>
           <label>
-            <input type="checkbox" value="numbers" onChange={handleFilter} />
+            <input
+              type="checkbox"
+              value="numbers"
+              onChange={handleFilterChange}
+            />
             Numbers
           </label>
           <label>
-            <input type="checkbox" value="highest_alphabet" onChange={handleFilter} />
+            <input
+              type="checkbox"
+              value="highest_alphabet"
+              onChange={handleFilterChange}
+            />
             Highest Alphabet
           </label>
 
+          {/* Display the filtered response */}
           <h3>Response:</h3>
           <pre>
             {JSON.stringify({
